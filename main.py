@@ -5,6 +5,8 @@ import pandas as pd
 from googleapiclient.discovery import build
 import os
 import re
+from requests import request
+import scipy as sp
 from sqlalchemy import true
 import streamlit as st
 import pafy as pa
@@ -24,17 +26,12 @@ from sklearn.metrics.pairwise import manhattan_distances
 from PIL import Image
 import pickle
 import sqlite3 as sq
+############################################################CSS 전용
+from streamlit_lottie import st_lottie
+from streamlit_lottie import st_lottie_spinner
+import requests
 
 okt = Okt()
-
-# 웹 제목
-st.title("Youtube-CR")
-
-# 주소 입력
-input_url = st.text_input(label="URL", value="")
-url=input_url
-my_str = url.replace("https://www.youtube.com/watch?v=","")
-
 
 # 주소 뒤 시간이 있다면..
 def num_re():
@@ -57,8 +54,7 @@ def num_re():
             return str 
     return str
   
-# 주소 뒤 시간 제거
-my_str2 = num_re()
+
 
 #썸네일 출력
 def get_thumbnail(url):
@@ -214,7 +210,7 @@ def Create_pword():
     plt.savefig('./result_wc/%s_positive.png' % title_get())
     plt.show()
 
-    st.markdown('긍정')
+    st.success("긍정")
     st.pyplot(pfig)
     
 # 부정 워드 클라우드
@@ -235,7 +231,7 @@ def Create_nword():
     plt.savefig('./result_wc/%s_negative.png' % title_get())
     plt.show()
     
-    st.markdown('부정')
+    st.error("부정")
     st.pyplot(nfig)
    
 # 중립 워드 클라우드
@@ -256,7 +252,7 @@ def Create_aword():
     plt.savefig('./result_wc/%s_neutral.png' % title_get())
     plt.show()
     
-    st.markdown('중립')
+    st.warning("중립")
     st.pyplot(nfig)   
 
 # 원형 차트 생성
@@ -373,7 +369,7 @@ if st.sidebar.button('1'):
         st.image(open_nwc)
     
     except:
-        st.write("저장된 기록이 존재하지 않습니다.")
+        st.error("저장된 기록이 존재하지 않습니다.")
     
 if st.sidebar.button('2'):
     try:
@@ -404,7 +400,7 @@ if st.sidebar.button('2'):
         st.image(open_pwc)
         st.image(open_nwc)
     except:
-        st.write("저장된 기록이 존재하지 않습니다.")
+        st.error("저장된 기록이 존재하지 않습니다.")
 
 if st.sidebar.button('3'):
     try:
@@ -576,8 +572,6 @@ def detail(senetence, num):
             else:
                 print('감정 저장 실패')
 
-
-
         
         ORDER()
 
@@ -587,86 +581,125 @@ def em(list, num):
 
 # 댓글 분석 눌렀을때...
 def Youtube_Comments_Analysis():
+# Search 버튼 클릭 시....
     # Search 버튼 클릭 시....
-    if st.button("검색"):
-        con = st.container()
-        with st.spinner("검색중...."):
-            time.sleep(2)
-        st.success("검색을 완료됐습니다. 댓글 개수이 많아질수록 분석 시간도 증가합니다.")
 
-        # 결과(입력 주소) 출력
-        con.caption("검색 결과")
-        con.write("입력하신 주소는 %s 입니다." % input_url)
-        
-        # 썸네일 출력
-        st.header('썸네일')
-        st.image(get_thumbnail(my_str2))
-
-        # 댓글 크롤링
-        Crawling()
-            
-        # 데이터 분석 
-        Analysis()
-
-        #감정 세분화
-        em(contain, 1)
-        em(contain2, 0)
-
-        #긍정 감정 리스트
-        pd_pos_emotion = pd.DataFrame({'감정' : pos_emotion})
-        
-        #부정 감정 리스트
-        pd_neg_emotion = pd.DataFrame({'감정' : neg_emotion})
-
-        # 긍정 댓글, 확률
-        global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
-        pd_contain = pd.DataFrame({'긍정 댓글' : contain})
-        pd_contain_number = pd.DataFrame({'확률': contain_number})
-        pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)     #엑셀 저장용
-        pos_result2 = pd.concat([pos_result, pd_pos_emotion], axis=1)       #streamlit 출력용
-
-        
-        
-        # 부정 댓글, 확률
-        pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
-        pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
-        neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)   #엑셀 저장용
-        neg_result2 = pd.concat([neg_result, pd_neg_emotion], axis=1)       #streamlit 출력용
-        
-        # 중립 댓글, 확률
-        pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
-        pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
-        neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
-        
-        
-        # 결과 저장
-        pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
-        neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
-        neu_result.to_excel('./result_video/%s_neutral.xlsx' % title_get(), header=['comments', 'Probability'])
+    st.success("검색을 완료하였습니다. 댓글 개수가 많아질수록, 분석 시간도 증가합니다.")
 
 
-        # 원형 차트 출력
-        st.header('원형 차트')
-        Create_plot()
+    # 결과(입력 주소) 출력
+    st.info("입력하신 주소는 %s 입니다." % input_url)
+    
+    # 썸네일 출력
+    st.markdown("<h3 style='text-align: center; '>YouTube 영상 썸네일</h3>", unsafe_allow_html=True)
+    st.image(get_thumbnail(my_str2), width=700)
+    st.balloons()
+
+
+    # 댓글 크롤링
+    Crawling()
+    st.info("")
+    st.markdown("<h2 style='text-align: center; '>감정 분석</h2>", unsafe_allow_html=True)
+    st.info("")
+    with st_lottie_spinner(lottie_analysis, key="analysis", height=900, speed=1.2):
+        st_lottie_spinner(Analysis())
+
+    #감정 세분화
+    em(contain, 1)
+    em(contain2, 0)
+
+    #긍정 감정 리스트
+    pd_pos_emotion = pd.DataFrame({'감정' : pos_emotion})
+    
+    #부정 감정 리스트
+    pd_neg_emotion = pd.DataFrame({'감정' : neg_emotion})
+    # 긍정 댓글, 확률
+    global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
+    pd_contain = pd.DataFrame({'긍정 댓글' : contain})
+    pd_contain_number = pd.DataFrame({'확률': contain_number})
+    pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)     #엑셀 저장용
+    pos_result2 = pd.concat([pos_result, pd_pos_emotion], axis=1)       #streamlit 출력용
+    
+    
+    # 부정 댓글, 확률
+    pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
+    pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
+    neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)   #엑셀 저장용
+    neg_result2 = pd.concat([neg_result, pd_neg_emotion], axis=1)       #streamlit 출력용
+    
+    # 중립 댓글, 확률
+    pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
+    pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
+    neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
+    
+    
+    # 결과 저장
+    pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
+    neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
+    neu_result.to_excel('./result_video/%s_neutral.xlsx' % title_get(), header=['comments', 'Probability'])
+    # 원형 차트 출력
+    st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
+    Create_plot()
+    
+    
+    # 데이터 프레임
+    st.success("긍정(개수 : %s)" % poslen)
+    st.dataframe(pos_result2)
+    
+    st.error("부정(개수 : %s)" % neglen)
+    st.dataframe(neg_result2)
+    
+    st.info("중립(개수 : %s)" % neulen)
+    st.dataframe(neu_result)
+    
+    
+    # 워드 클라우드 출력
+    st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
+    Create_pword()
+    Create_nword()
+    Create_aword()
+    
+    save_db()
         
-        
-        # 데이터 프레임
-        st.header("긍정(개수 : %s)" % poslen)
-        st.dataframe(pos_result2)
-        
-        st.header("부정(개수 : %s)" % neglen)
-        st.dataframe(neg_result2)
-        
-        st.header("중립(개수 : %s)" % neulen)
-        st.dataframe(neu_result)
-        
-        
-        # 워드 클라우드 출력
-        st.header('워드 클라우드')
-        Create_pword()
-        Create_nword()
-        Create_aword()
-        
-        save_db()
-        
-Youtube_Comments_Analysis()
+###################################################################CSS 함수
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+def streamlit_title():
+    lottie_url_title = "https://assets1.lottiefiles.com/packages/lf20_xtuje6sh.json"
+    lottie_title = load_lottieurl(lottie_url_title)
+    st_lottie(lottie_title, key="title", height=300)
+
+################################################################크롤링 검색시 사용
+lottie_url_search = "https://assets1.lottiefiles.com/packages/lf20_7cdnmkzr.json"
+lottie_search = load_lottieurl(lottie_url_search)
+
+################################################################분석시 사용
+lottie_url_analysis = "https://assets1.lottiefiles.com/datafiles/XvkAoqzOt84tzDQ/data.json"
+lottie_analysis = load_lottieurl(lottie_url_analysis)
+
+
+###################################################################
+
+# 웹 제목
+streamlit_title()
+st.markdown("<h1 style='text-align: center; color: red;'>YouTube</h1>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; '>댓글 분석</h3>", unsafe_allow_html=True)
+
+
+# 주소 입력
+with st.form('main', clear_on_submit=True):
+    input_url = st.text_input(label="URL", value="")
+    url=input_url
+    my_str = url.replace("https://www.youtube.com/watch?v=","")
+    st.form_submit_button('분석')
+
+
+if st.form_submit_button and my_str:
+    with st_lottie_spinner(lottie_search, key="search", height=300):
+        time.sleep(2)
+    my_str2 = num_re()
+    Youtube_Comments_Analysis()
