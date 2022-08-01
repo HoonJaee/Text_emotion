@@ -22,6 +22,7 @@ from collections import Counter
 from konlpy.tag import Okt
 from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
+# from tensorflow.keras.preprocessing.sequence import pad_sequences
 from keras.utils import pad_sequences
 from keras.models import load_model
 import pickle
@@ -30,15 +31,13 @@ import sqlite3
 from selenium.webdriver.common.keys import Keys
 import warnings
 warnings.filterwarnings('ignore')
+############################################################CSS 전용
+from streamlit_lottie import st_lottie
+from streamlit_lottie import st_lottie_spinner
+import requests
+
 
 okt = Okt()
-
-# 웹 제목
-st.title("Shopping-CR")
-
-# 주소 입력
-input_url = st.text_input(label="URL", value="")
-url = input_url
 
 def title_get():
     title_url = url
@@ -47,11 +46,11 @@ def title_get():
     
     tags = soup.find('body').find('div', {'class':'top_summary_title__15yAr'})
     
-    a=[]
+    title_list=[]
     for tag in tags:
-        a.append(tag.text)
+        title_list.append(tag.text)
     
-    shop_title = a[0]
+    shop_title = title_list[0]
 
     return shop_title
     
@@ -221,7 +220,7 @@ def Analysis():
     # # 다른 함수에서도 쓰기 위해 global(전역변수) 선언
     global sheet
     filename = pd.read_excel('./shop_xlsx/%s.xlsx' % title_get())
-    sheet = filename['comment'] 
+    sheet = filename['comment']
 
 
     # comment 칼럼의 각각의 데이터를 읽기
@@ -270,7 +269,7 @@ def Create_pword():
     pw = [n for n in pn if len(n) > 1] 
     
     pc = Counter(pw)
-    pwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    pwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250, background_color='white')
     
     pg = pwc.generate_from_frequencies(pc)
     pfig = plt.figure()
@@ -279,7 +278,7 @@ def Create_pword():
     plt.axis('off')
     plt.show()
 
-    st.markdown('긍정')
+    st.success('긍정')
     st.pyplot(pfig)
     
 # 부정 워드 클라우드
@@ -290,7 +289,7 @@ def Create_nword():
     nn = okt.nouns(neg)
     nw = [n for n in nn if len(n) > 1]
     nc = Counter(nw)
-    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250, background_color='white')
     
     ng = nwc.generate_from_frequencies(nc)
     nfig = plt.figure()
@@ -299,93 +298,129 @@ def Create_nword():
     plt.axis('off')
     plt.show()
     
-    st.markdown('부정')
+    st.error('부정')
     st.pyplot(nfig)
 
 # 댓글 분석 눌렀을때...
 def Youtube_Comments_Analysis():
     # Search 버튼 클릭 시....
-    if st.button("검색"):
-        con = st.container()
-        with st.spinner("검색중...."):
-            time.sleep(0.2)
-        st.success("검색을 완료됐습니다. 댓글 개수이 많아질수록 분석 시간도 증가합니다.")
 
-        # 결과(입력 주소) 출력
-        con.caption("검색 결과")
-        con.write(f"입력하신 주소는 {str(input_url)} 입니다.")
- 
-        # 쇼핑몰 크롤링
-        Shopping()
-            
-        # 데이터 분석
-        Analysis()
+    st.success("검색을 완료됐습니다. 댓글 개수가 많아질수록 분석 시간도 증가합니다.")
 
-        # 긍정 댓글, 확률
-        global pd_contain, pd_contain2
+    st.info(f"입력하신 주소는 {str(input_url)} 입니다.")
 
-        pd_contain = pd.DataFrame({'긍정 댓글' : contain})
-        pd_contain_number = pd.DataFrame({'확률': contain_number})
-        pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
+    with st_lottie_spinner(lottie_Shopping, key="Shopping", height=1000, speed=1.1):
+        st_lottie_spinner(Shopping())
+    # 쇼핑몰 크롤링
+    st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+    # 데이터 분석
+    Analysis()
 
-        #부정 댓글, 확률
-        pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
-        pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
-        neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
+    # 긍정 댓글, 확률
+    global pd_contain, pd_contain2
 
-        #긍정, 부정 엑셀파일로 저장
-        pos_result.to_excel('./shop_emotion/%s_positive.xlsx' % title_get())
-        neg_result.to_excel('./shop_emotion/%s_negative.xlsx' % title_get())
+    pd_contain = pd.DataFrame({'긍정 댓글' : contain})
+    pd_contain_number = pd.DataFrame({'확률': contain_number})
+    pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
 
-        #긍정, 부정 파일 불러오기
-        open_pex = pd.read_excel("./shop_emotion/%s_positive.xlsx" % title_get())
-        open_nex = pd.read_excel("./shop_emotion/%s_negative.xlsx" % title_get()) 
+    #부정 댓글, 확률
+    pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
+    pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
+    neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
 
-        #긍정 열 값 가져오기
-        pex_text = open_pex['긍정 댓글']
-        pex_percent = open_pex['확률']
-        pex_list =[]
+    #긍정, 부정 엑셀파일로 저장
+    pos_result.to_excel('./shop_emotion/%s_positive.xlsx' % title_get())
+    neg_result.to_excel('./shop_emotion/%s_negative.xlsx' % title_get())
 
-        #부정 열 값 가져오기
-        nex_text = open_nex['부정 댓글']
-        nex_percent = open_nex['확률']
-        nex_list =[]
+    #긍정, 부정 파일 불러오기
+    open_pex = pd.read_excel("./shop_emotion/%s_positive.xlsx" % title_get())
+    open_nex = pd.read_excel("./shop_emotion/%s_negative.xlsx" % title_get()) 
 
-        #DB 긍정 댓글 중 ['']  삭제
-        for cell in pex_text:
-                result = re.sub('[\[\]\'n\\\]', ' ', cell)
-                pex_list.append(result)
+    #긍정 열 값 가져오기
+    pex_text = open_pex['긍정 댓글']
+    pex_percent = open_pex['확률']
+    pex_list =[]
 
-        #DB 부정 댓글 중 [''] 삭제
-        for cell in nex_text:
-                result2 = re.sub('[\[\]\'n\\\]', ' ', cell)
-                nex_list.append(result2)
+    #부정 열 값 가져오기
+    nex_text = open_nex['부정 댓글']
+    nex_percent = open_nex['확률']
+    nex_list =[]
 
-        f_pex_list = pd.DataFrame({'긍정 댓글' : pex_list})
-        f_nex_list = pd.DataFrame({'부정 댓글' : nex_list})
+    #DB 긍정 댓글 중 ['']  삭제
+    for cell in pex_text:
+            result = re.sub('[\[\]\'n\\\]', ' ', cell)
+            pex_list.append(result)
 
-        pos_result = pd.concat([f_pex_list, pd.DataFrame(pex_percent)], axis=1)
-        neg_result = pd.concat([f_nex_list, pd.DataFrame(nex_percent)], axis=1)
+    #DB 부정 댓글 중 [''] 삭제
+    for cell in nex_text:
+            result2 = re.sub('[\[\]\'n\\\]', ' ', cell)
+            nex_list.append(result2)
 
-        #전체 댓글
-        st.header("전체(개수 : %s)" %len(sheet))
+    f_pex_list = pd.DataFrame({'긍정 댓글' : pex_list})
+    f_nex_list = pd.DataFrame({'부정 댓글' : nex_list})
 
-        # 데이터 프레임 출력
-        st.header("긍정(개수 : %s)" % len(pd_contain))
-        st.table(pos_result)
-        
-        st.header("부정(개수 : %s)" % len(pd_contain2))
-        st.table(neg_result)
+    pos_result = pd.concat([f_pex_list, pd.DataFrame(pex_percent)], axis=1)
+    neg_result = pd.concat([f_nex_list, pd.DataFrame(nex_percent)], axis=1)
 
-        # 원형 차트 출력 
-        st.header('원형 차트')
-        Create_plot()
-        
-        # 워드 클라우드 출력
-        st.header('워드 클라우드')
-        Create_pword()
-        Create_nword()
+    #전체 댓글
+    st.info("전체 리뷰(개수 : %s)" %len(sheet))
+
+    # 데이터 프레임 출력
+    st.success("긍정 리뷰(개수 : %s)" % len(pd_contain))
+    st.table(pos_result)
     
+    st.error("부정 리뷰(개수 : %s)" % len(pd_contain2))
+    st.table(neg_result)
+
+    st.info("")
+    # 원형 차트 출력 
+    st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
+    Create_plot()
+
+    st.info("")
+    # 워드 클라우드 출력
+    st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
+    Create_pword()
+    Create_nword()
+    
+###################################################################CSS 함수
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+def streamlit_title():
+    lottie_url_title = "https://assets1.lottiefiles.com/packages/lf20_5ngs2ksb.json"
+    lottie_title = load_lottieurl(lottie_url_title)
+    st_lottie(lottie_title, key="title", height=400)
+
+################################################################크롤링 검색시 사용
+lottie_url_search = "https://assets1.lottiefiles.com/packages/lf20_7cdnmkzr.json"
+lottie_search = load_lottieurl(lottie_url_search)
+
+################################################################크롤링 진행중일때 사용
+lottie_url_Shopping = "https://assets1.lottiefiles.com/datafiles/XvkAoqzOt84tzDQ/data.json"
+lottie_Shopping = load_lottieurl(lottie_url_Shopping)
 
 
-Youtube_Comments_Analysis()
+###################################################################
+
+# 웹 제목
+streamlit_title()
+st.markdown("<h1 style='text-align: center; color: green;'>Naver</h1>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; '>쇼핑 평점 분석</h3>", unsafe_allow_html=True)
+
+
+# 주소 입력
+with st.form('main', clear_on_submit=True):
+    st.success("Google Chrome 이 실행되어도 당황하지 마세요! 크롤링의 일부입니다.")
+    input_url = st.text_input(label="URL", value="")
+    url=input_url
+    st.form_submit_button('분석')
+
+
+if st.form_submit_button and url:
+    with st_lottie_spinner(lottie_search, key="search", height=300):
+        time.sleep(2)
+    Youtube_Comments_Analysis()

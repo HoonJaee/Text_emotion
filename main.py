@@ -439,12 +439,12 @@ def detail(senetence, num):
         
         text = re.sub('[-=+,#/\:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》br]', '', text)
         new_sent = text.replace(" ", '') # 띄어쓰기가 없는 문장 임의로 만들기
-        new_sent = text.replace("ㅋ",' ㅋ').replace("ㅜ",' ㅜ').replace("ㅠ",' ㅠ').replace("?",' ?').replace("ㅎ",' ㅎ')
+        new_sent = text.replace("ㅋ",' ㅋ').replace("ㅜ",' ㅜ').replace("ㅠ",' ㅠ').replace("?",' ? ').replace("ㅎ",' ㅎ')
         
+        # kospacing_text = new_sent
         
-        
-        spacing = Spacing()
-        kospacing_text = spacing(new_sent)
+        # spacing = Spacing()
+        # kospacing_text = spacing(new_sent)
     
     
         texxt = open("./data/sad.txt","r",encoding='UTF-8')
@@ -453,7 +453,7 @@ def detail(senetence, num):
         texxt.close()
         #슬픔
 
-        sentence = (result_sad,kospacing_text)
+        sentence = (result_sad,new_sent)
 
     
         
@@ -463,7 +463,7 @@ def detail(senetence, num):
         texxt1.close()
         #기쁨
         
-        sentence1 =(result_happy,kospacing_text)
+        sentence1 =(result_happy,new_sent)
             
 
         texxt2 = open("./data/anger.txt","r",encoding='UTF-8')
@@ -472,14 +472,14 @@ def detail(senetence, num):
         texxt2.close()
         #분노
 
-        sentence2 =(result_anger,kospacing_text)        
+        sentence2 =(result_anger,new_sent)        
         
         texxt3 = open("./data/surprised.txt","r",encoding='UTF-8')
         lists3 = texxt3.readlines()
         result_surprised = list_to_str(lists3)
         texxt3.close()
         #놀람
-        sentence3=(result_surprised,kospacing_text)
+        sentence3=(result_surprised,new_sent)
 
 
         # 객체 생성
