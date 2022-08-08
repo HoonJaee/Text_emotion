@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 from wordcloud import WordCloud
 from sklearn.feature_extraction.text import TfidfVectorizer
-from pykospacing import Spacing
 from collections import Counter
 from konlpy.tag import Okt
 from tqdm import tqdm
@@ -100,8 +99,6 @@ contain2 = []           #부정 cell
 contain2_number = []    #부정 확률
 contain3 = []           #중립
 contain3_number = []    #중립 확률
-pos_emotion = []        #감정 분류
-neg_emotion = []
 
 def Analysis():
     tokenizer = Tokenizer()
@@ -191,16 +188,13 @@ def Create_pword():
     # 2. 리스트 내의 요소를 변수에 대입하고 변수를 str(문자열) 형태로 변환 
     pos = ''.join([str(n) for n in contain])
     
-    # 190줄을 풀어서 설명한 코드
-    # pos = list_to_str(contain)
-    
     # 데이터 전처리
     pn = okt.nouns(pos)
     # 문장의 길이가 1은 제외
     pw = [n for n in pn if len(n) > 1]
     
     pc = Counter(pw)
-    pwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    pwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250, background_color='white')
     
     pg = pwc.generate_from_frequencies(pc)
     pfig = plt.figure()
@@ -216,13 +210,12 @@ def Create_pword():
 # 부정 워드 클라우드
 def Create_nword():
     neg = ''.join([str(n) for n in contain2])
-    # neg = list_to_str(contain2)
     
     nn = okt.nouns(neg)
     nw = [n for n in nn if len(n) > 1]
     nc = Counter(nw)
-    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
-    
+    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250, background_color='white')
+
     ng = nwc.generate_from_frequencies(nc)
     nfig = plt.figure()
     
@@ -237,12 +230,11 @@ def Create_nword():
 # 중립 워드 클라우드
 def Create_aword():
     neu = ''.join([str(n) for n in contain3])
-    # neg = list_to_str(contain2)
     
     nn = okt.nouns(neu)
     nw = [n for n in nn if len(n) > 1]
     nc = Counter(nw)
-    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250, background_color='white')
     
     ng = nwc.generate_from_frequencies(nc)
     nfig = plt.figure()
@@ -313,8 +305,6 @@ def save_db():
         c.execute('INSERT INTO edata(vid, pex, nex, chart, pwc, nwc) VALUES (?,?,?,?,?,?);', (title_get(), pex, nex , cpath, ppath, npath))
         print('데이터를 저장했습니다.')# 테이블 생성
         
-        
-        
         # ipList 테이블에서 id값 가져오기
         c.execute('SELECT id FROM ipList;')
         all_id = c.fetchall()
@@ -331,7 +321,6 @@ def save_db():
                     print("데이터 삭제 완료")
                     st.sidebar.write("검색 기록이 초기화 됐습니다.")
                     conn.commit()
-                         
         
         search_history()
         
@@ -362,10 +351,18 @@ if st.sidebar.button('1'):
         open_nwc =  Image.open(nwc)
 
         # 출력
+        st.success("긍정")
         st.write(open_pex)
+        st.error("부정")
         st.write(open_nex)
+        
+        st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
         st.image(open_chart)
+        
+        st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
+        st.success("긍정")
         st.image(open_pwc)
+        st.error("부정")
         st.image(open_nwc)
     
     except:
@@ -394,10 +391,18 @@ if st.sidebar.button('2'):
         open_nwc =  Image.open(nwc)
 
         # 출력
+        st.success("긍정")
         st.write(open_pex)
+        st.error("부정")
         st.write(open_nex)
+        
+        st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
         st.image(open_chart)
+        
+        st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
+        st.success("긍정")
         st.image(open_pwc)
+        st.error("부정")
         st.image(open_nwc)
     except:
         st.error("저장된 기록이 존재하지 않습니다.")
@@ -425,166 +430,30 @@ if st.sidebar.button('3'):
         open_nwc =  Image.open(nwc)
 
         # 출력
+        st.success("긍정")
         st.write(open_pex)
+        st.error("부정")
         st.write(open_nex)
+        
+        st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
         st.image(open_chart)
+        
+        st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
+        st.success("긍정")
         st.image(open_pwc)
+        st.error("부정")
         st.image(open_nwc)
     
     except:
         st.write("저장된 기록이 존재하지 않습니다.")
 
-def detail(senetence, num):
-        text = senetence
-        
-        text = re.sub('[-=+,#/\:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》br]', '', text)
-        new_sent = text.replace(" ", '') # 띄어쓰기가 없는 문장 임의로 만들기
-        new_sent = text.replace("ㅋ",' ㅋ').replace("ㅜ",' ㅜ').replace("ㅠ",' ㅠ').replace("?",' ? ').replace("ㅎ",' ㅎ')
-        
-        # kospacing_text = new_sent
-        
-        # spacing = Spacing()
-        # kospacing_text = spacing(new_sent)
-    
-    
-        texxt = open("./data/sad.txt","r",encoding='UTF-8')
-        lists = texxt.readlines()
-        result_sad = list_to_str(lists)
-        texxt.close()
-        #슬픔
 
-        sentence = (result_sad,new_sent)
-
-    
-        
-        texxt1 = open("./data/happy.txt","r",encoding='UTF-8')
-        lists1 = texxt1.readlines()
-        result_happy = list_to_str(lists1)
-        texxt1.close()
-        #기쁨
-        
-        sentence1 =(result_happy,new_sent)
-            
-
-        texxt2 = open("./data/anger.txt","r",encoding='UTF-8')
-        lists2 = texxt2.readlines()
-        result_anger = list_to_str(lists2)
-        texxt2.close()
-        #분노
-
-        sentence2 =(result_anger,new_sent)        
-        
-        texxt3 = open("./data/surprised.txt","r",encoding='UTF-8')
-        lists3 = texxt3.readlines()
-        result_surprised = list_to_str(lists3)
-        texxt3.close()
-        #놀람
-        sentence3=(result_surprised,new_sent)
-
-
-        # 객체 생성
-        tfidf_vectorizer = TfidfVectorizer()
-        
-        # 문장 벡터화 진행
-        tfidf_matrix = tfidf_vectorizer.fit_transform(sentence)
-        tfidf_matrix1 = tfidf_vectorizer.fit_transform(sentence1)
-        tfidf_matrix2 = tfidf_vectorizer.fit_transform(sentence2)
-        tfidf_matrix3 = tfidf_vectorizer.fit_transform(sentence3)
-        
-
-        # 각 단어
-        text = tfidf_vectorizer.get_feature_names()
-        
-        
-
-        # 각 단어의 벡터 값
-        # idf = tfidf_vectorizer.idf_
-        
-
-        manhattan_distances(tfidf_matrix[0:1], tfidf_matrix[1:2])
-        manhattan_distances(tfidf_matrix1[0:1], tfidf_matrix1[1:2])
-        manhattan_distances(tfidf_matrix2[0:1], tfidf_matrix2[1:2])
-        manhattan_distances(tfidf_matrix3[0:1], tfidf_matrix3[1:2])
-
-
-
-
-        tokenized_doc1 = set(sentence[0].split(' '))
-        tokenized_doc2 = set(sentence[1].split(' '))
-
-        tokenized_doc3 = set(sentence1[0].split(' '))
-        tokenized_doc4 = set(sentence1[1].split(' '))
-
-        tokenized_doc5 = set(sentence2[0].split(' '))
-        tokenized_doc6 = set(sentence2[1].split(' '))
-        tokenized_doc7 = set(sentence3[0].split(' '))
-        tokenized_doc8 = set(sentence3[1].split(' '))
-        
-
-
-        union = set(tokenized_doc1).union(set(tokenized_doc2))
-        union1 = set(tokenized_doc3).union(set(tokenized_doc4))
-        union2 = set(tokenized_doc5).union(set(tokenized_doc6))
-        union3 = set(tokenized_doc7).union(set(tokenized_doc8))
-        
-
-
-        intersection = set(tokenized_doc1).intersection(set(tokenized_doc2))
-        intersection1 = set(tokenized_doc3).intersection(set(tokenized_doc4))
-        intersection2 = set(tokenized_doc5).intersection(set(tokenized_doc6))
-        intersection3 = set(tokenized_doc7).intersection(set(tokenized_doc8))
-        
-        
-        Score = len(intersection)/len(union)
-        Score1 = len(intersection1)/len(union1)
-        Score2 = len(intersection2)/len(union2)
-        Score3 = len(intersection3)/len(union3)
-        
-
-        
-        
-
-        def ORDER():
-            dict_test = {
-                '감정': ['슬픔', '기쁨', '분노', '놀람'],
-                '유사도': [Score, Score1, Score2, Score3],
-            }
-
-            df_test = pd.DataFrame(dict_test)
-            df_test = df_test.sort_values(by=['유사도'], ascending=False)
-
-            df = df_test['감정']
-            df_list = []
-            
-
-            for df_cell in df:
-                df_list.append(df_cell)   
-
-            df_finish =  pd.DataFrame({'감정' : df_list})
-
-            first = df_finish['감정']
-            list_first = first[0]
-
-            if num == 1:
-                pos_emotion.append(list_first)
-            elif num == 0:
-                neg_emotion.append(list_first)
-            else:
-                print('감정 저장 실패')
-
-        
-        ORDER()
-
-def em(list, num):
-    for cell in list:
-        detail(str(cell), num)
 
 # 댓글 분석 눌렀을때...
 def Youtube_Comments_Analysis():
 # Search 버튼 클릭 시....
     # Search 버튼 클릭 시....
-
-    st.success("검색을 완료하였습니다. 댓글 개수가 많아질수록, 분석 시간도 증가합니다.")
+    st.success("검색을 완료하였습니다. 댓글 개수가 많아질수록, 분석 시간이 증가합니다.")
 
 
     # 결과(입력 주소) 출력
@@ -604,28 +473,19 @@ def Youtube_Comments_Analysis():
     with st_lottie_spinner(lottie_analysis, key="analysis", height=900, speed=1.2):
         st_lottie_spinner(Analysis())
 
-    #감정 세분화
-    em(contain, 1)
-    em(contain2, 0)
 
-    #긍정 감정 리스트
-    pd_pos_emotion = pd.DataFrame({'감정' : pos_emotion})
-    
-    #부정 감정 리스트
-    pd_neg_emotion = pd.DataFrame({'감정' : neg_emotion})
     # 긍정 댓글, 확률
     global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
+    
     pd_contain = pd.DataFrame({'긍정 댓글' : contain})
     pd_contain_number = pd.DataFrame({'확률': contain_number})
     pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)     #엑셀 저장용
-    pos_result2 = pd.concat([pos_result, pd_pos_emotion], axis=1)       #streamlit 출력용
     
     
     # 부정 댓글, 확률
     pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
     pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
     neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)   #엑셀 저장용
-    neg_result2 = pd.concat([neg_result, pd_neg_emotion], axis=1)       #streamlit 출력용
     
     # 중립 댓글, 확률
     pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
@@ -643,11 +503,13 @@ def Youtube_Comments_Analysis():
     
     
     # 데이터 프레임
+    st.success("전체(개수 : %s)" % allen)
+
     st.success("긍정(개수 : %s)" % poslen)
-    st.dataframe(pos_result2)
+    st.dataframe(pos_result)
     
     st.error("부정(개수 : %s)" % neglen)
-    st.dataframe(neg_result2)
+    st.dataframe(neg_result)
     
     st.info("중립(개수 : %s)" % neulen)
     st.dataframe(neu_result)
@@ -693,7 +555,7 @@ st.markdown("<h3 style='text-align: center; '>댓글 분석</h3>", unsafe_allow_
 # 주소 입력
 with st.form('main', clear_on_submit=True):
     input_url = st.text_input(label="URL", value="")
-    url=input_url
+    url = input_url
     my_str = url.replace("https://www.youtube.com/watch?v=","")
     st.form_submit_button('분석')
 
