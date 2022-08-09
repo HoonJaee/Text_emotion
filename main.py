@@ -15,13 +15,14 @@ import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 from wordcloud import WordCloud
 from sklearn.feature_extraction.text import TfidfVectorizer
+from pykospacing import Spacing
 from collections import Counter
 from konlpy.tag import Okt
 from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
+# from keras.preprocessing.sequence import pad_sequences
 from keras.utils import pad_sequences
 from keras.models import load_model
-from sklearn.metrics.pairwise import manhattan_distances
 from PIL import Image
 import pickle
 import sqlite3 as sq
@@ -57,13 +58,14 @@ def num_re():
 
 #썸네일 출력
 def get_thumbnail(url):
-    id = url
-    img = 'https://img.youtube.com/vi/{}/0.jpg'.format(id)
-    return img    
+        id = url
+        img = 'https://img.youtube.com/vi/{}/0.jpg'.format(id)
+        return img
+  
 
 # 제목 가져와서 변환 후 변환 값 return
 def title_get():
-    videoinfo = pa.new(url)
+    videoinfo = pa.new(Y_url)
     video_title = videoinfo.title
 
     #제목 특수기호 있으면 공백으로 치환
@@ -108,9 +110,9 @@ def Analysis():
     # 불용어
     stopwords = ['은','는','이','가','하','아','것','들','의','있','되','수','보','주','등','한','줄','를','을','에','에게','께','한테','더러','에서','에게서','한테서','로','으로','와','과','도','부터','도','만','이나','나','라도','의'
                  , '거의', '겨우', '결국', '그런데', '즉', '참', '챗', '할때', '할뿐', '함께', '해야한다', '휴']
-    
+
     PATH = './model_test/'
-    
+
     #모델 및 토큰 불러오기
     model = load_model(PATH + 'best_model.h5')
     with open(PATH+'tokenizer.pickle', 'rb') as handle:
@@ -127,11 +129,11 @@ def Analysis():
         score = float(model.predict(pad_new)) # 예측
         
         # 긍정적이라면 contain 리스트에 추가
-        if(score > 0.7):
+        if(score > 0.65):
             contain.append(list)
             contain_number.append(score * 100)
         # 중립이라면 contain3 리스트에 추가
-        elif 0.5 < score < 0.7:
+        elif 0.5 < score < 0.65:
             contain3.append(list)
             contain3_number.append(score*100)
         # 부정적이라면 contain2 리스트에 추가
@@ -451,77 +453,75 @@ if st.sidebar.button('3'):
 
 # 댓글 분석 눌렀을때...
 def Youtube_Comments_Analysis():
-# Search 버튼 클릭 시....
-    # Search 버튼 클릭 시....
-    st.success("검색을 완료하였습니다. 댓글 개수가 많아질수록, 분석 시간이 증가합니다.")
+    try:
+        # Search 버튼 클릭 시....
+        # Search 버튼 클릭 시....
+        st.success("검색을 완료하였습니다. 댓글 개수가 많아질수록, 분석 시간이 증가합니다.")
 
 
-    # 결과(입력 주소) 출력
-    st.info("입력하신 주소는 %s 입니다." % input_url)
-    
-    # 썸네일 출력
-    st.markdown("<h3 style='text-align: center; '>YouTube 영상 썸네일</h3>", unsafe_allow_html=True)
-    st.image(get_thumbnail(my_str2), width=700)
-    st.balloons()
+        # 결과(입력 주소) 출력
+        st.info("입력하신 주소는 %s 입니다." % Youtube_url)
+
+        # 썸네일 출력
+        st.markdown("<h3 style='text-align: center; '>YouTube 영상 썸네일</h3>", unsafe_allow_html=True)
+        st.image(get_thumbnail(my_str2), width=700)
+        st.balloons()
 
 
-    # 댓글 크롤링
-    Crawling()
-    st.info("")
-    st.markdown("<h2 style='text-align: center; '>감정 분석</h2>", unsafe_allow_html=True)
-    st.info("")
-    with st_lottie_spinner(lottie_analysis, key="analysis", height=900, speed=1.2):
-        st_lottie_spinner(Analysis())
+        # 댓글 크롤링
+        Crawling()
+        st.info("")
+        st.markdown("<h2 style='text-align: center; '>감정 분석</h2>", unsafe_allow_html=True)
+        st.info("")
+        with st_lottie_spinner(lottie_analysis, key="analysis", height=900, speed=1.2):
+            st_lottie_spinner(Analysis())
 
+        # 긍정 댓글, 확률
+        global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
 
-    # 긍정 댓글, 확률
-    global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
-    
-    pd_contain = pd.DataFrame({'긍정 댓글' : contain})
-    pd_contain_number = pd.DataFrame({'확률': contain_number})
-    pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)     #엑셀 저장용
-    
-    
-    # 부정 댓글, 확률
-    pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
-    pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
-    neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)   #엑셀 저장용
-    
-    # 중립 댓글, 확률
-    pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
-    pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
-    neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
-    
-    
-    # 결과 저장
-    pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
-    neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
-    neu_result.to_excel('./result_video/%s_neutral.xlsx' % title_get(), header=['comments', 'Probability'])
-    # 원형 차트 출력
-    st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
-    Create_plot()
-    
-    
-    # 데이터 프레임
-    st.success("전체(개수 : %s)" % allen)
+        pd_contain = pd.DataFrame({'긍정 댓글' : contain})
+        pd_contain_number = pd.DataFrame({'확률': contain_number})
+        pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)     #엑셀 저장용
 
-    st.success("긍정(개수 : %s)" % poslen)
-    st.dataframe(pos_result)
-    
-    st.error("부정(개수 : %s)" % neglen)
-    st.dataframe(neg_result)
-    
-    st.info("중립(개수 : %s)" % neulen)
-    st.dataframe(neu_result)
-    
-    
-    # 워드 클라우드 출력
-    st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
-    Create_pword()
-    Create_nword()
-    Create_aword()
-    
-    save_db()
+        # 부정 댓글, 확률
+        pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
+        pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
+        neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)   #엑셀 저장용
+
+        # 중립 댓글, 확률
+        pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
+        pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
+        neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
+
+        # 결과 저장
+        pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
+        neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
+        neu_result.to_excel('./result_video/%s_neutral.xlsx' % title_get(), header=['comments', 'Probability'])
+        # 원형 차트 출력
+        st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
+        Create_plot()
+
+        # 데이터 프레임
+        st.success("전체(개수 : %s)" % allen)
+
+        st.success("긍정(개수 : %s)" % poslen)
+        st.dataframe(pos_result)
+
+        st.error("부정(개수 : %s)" % neglen)
+        st.dataframe(neg_result)
+
+        st.info("중립(개수 : %s)" % neulen)
+        st.dataframe(neu_result)
+
+        # 워드 클라우드 출력
+        st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
+        Create_pword()
+        Create_nword()
+        Create_aword()
+
+        save_db()
+    except:
+        st.error("잘못된 링크 입니다.")
         
 ###################################################################CSS 함수
 def load_lottieurl(url: str):
@@ -553,10 +553,10 @@ st.markdown("<h3 style='text-align: center; '>댓글 분석</h3>", unsafe_allow_
 
 
 # 주소 입력
-with st.form('main', clear_on_submit=True):
-    input_url = st.text_input(label="URL", value="")
-    url = input_url
-    my_str = url.replace("https://www.youtube.com/watch?v=","")
+with st.form('Youtube', clear_on_submit=True):
+    Youtube_url = st.text_input(label="URL", value="")
+    Y_url=Youtube_url
+    my_str = Y_url.replace("https://www.youtube.com/watch?v=","")
     st.form_submit_button('분석')
 
 
