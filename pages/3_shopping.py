@@ -40,15 +40,15 @@ import math
 okt = Okt()
 
 def title_get():
-    title_url = N_url
+    title_url = url
     response = requests.get(title_url)
     soup = BeautifulSoup(response.text,"html.parser")
     
     title = soup.find('body').find('div', {'class':'top_summary_title__15yAr'})
     
     title_list=[]
-    for title_tag in title:
-        title_list.append(title_tag.text)
+    for tag in title:
+        title_list.append(tag.text)
     
     shop_title = title_list[0]
 
@@ -56,7 +56,7 @@ def title_get():
 
 #평점 가져오기
 def grade_get():
-    title_url = N_url
+    title_url = url
     response = requests.get(title_url)
     soup = BeautifulSoup(response.text,"html.parser")
     
@@ -75,7 +75,7 @@ def Shopping():
         try:
             #1. 웹사이트 불러오기
             #크롤링할 웹사이트 주소
-            ns_address = N_url
+            ns_address = url
 
             #크롤링한 모든리뷰 저장
             all_shoppingmall_review = "/html/body/div/div/div[2]/div[2]/div[2]/div[3]/div[%s]" % a
@@ -194,9 +194,9 @@ contain = []            #긍정 cell
 contain_number =[]      #긍정 확률
 contain2 = []           #부정 cell
 contain2_number = []    #부정 확률
-contain3 = []           #중립 cell
-contain3_number = []    #중립 확률
-star_score = []         
+contain3 = []           
+contain3_number = []
+star_score = []
 
 #감정분석
 def Analysis():
@@ -383,23 +383,23 @@ def Predict_grade():
     int_stars = int(stars)
     
     if int_stars == 5:
-        streamlit_5star()
+        predict_5star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 4 <= int_stars < 5:
-        streamlit_4star()
+        predict_4star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 3 <= int_stars < 4:
-        streamlit_3star()
+        predict_3star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 2 <= int_stars < 3:
-        streamlit_2star()
+        predict_2star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 1 <= int_stars < 2:
-        streamlit_1star()
+        predict_1star()
         st.info("예측 평점 : %.1f" % stars)
         
     else:
@@ -412,7 +412,7 @@ def Naver_Shopping_Analysis():
 
     st.success("검색을 완료됐습니다. 댓글 개수가 많아질수록 분석 시간도 증가합니다.")
 
-    st.info(f"입력하신 주소는 {str(Naver_url)} 입니다.")
+    st.info(f"입력하신 주소는 {str(input_url)} 입니다.")
 
     with st_lottie_spinner(lottie_Shopping, key="Shopping", height=1000, speed=1.1):
         st_lottie_spinner(Shopping())
@@ -499,6 +499,7 @@ def Naver_Shopping_Analysis():
     st.markdown("<h2 style='text-align: center; color: yellow; '>평점</h2>", unsafe_allow_html=True)
     Real_grade()
     Predict_grade()
+    ###
 
     #전체 댓글
     st.info("전체 리뷰(개수 : %s)" % len(sheet))
@@ -513,6 +514,7 @@ def Naver_Shopping_Analysis():
     st.warning("중립 리뷰(개수 : %s)" % len(pd_contain3))
     st.table(neu_result)
     
+
     st.info("")
     # 원형 차트 출력 
     st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
@@ -539,30 +541,61 @@ def streamlit_title():
 
 
 ################################################################### 평점 별 CSS
-def streamlit_1star():
+def streamlit_1star(): 
     lottie_url_1star = "https://assets3.lottiefiles.com/private_files/lf30_gjwkgweu.json"
     lottie_1star = load_lottieurl(lottie_url_1star)
-    st_lottie(lottie_1star, key="1star", height=300)
-
-def streamlit_2star():
+    st_lottie(lottie_1star, key="1stars", height=300)
+    
+    
+def streamlit_2star():  
     lottie_url_2star = "https://assets3.lottiefiles.com/private_files/lf30_liff4pv6.json"
     lottie_2star = load_lottieurl(lottie_url_2star)
-    st_lottie(lottie_2star, key="2star", height=300)
+    st_lottie(lottie_2star, key="2stars", height=300)
 
 def streamlit_3star():
     lottie_url_3star = "https://assets3.lottiefiles.com/private_files/lf30_15cotjfi.json"
     lottie_3star = load_lottieurl(lottie_url_3star)
+    st_lottie(lottie_3star, key="3stars", height=300)
+
+def streamlit_4star(): 
+    lottie_url_4star = "https://assets3.lottiefiles.com/private_files/lf30_r3usrsoq.json"
+    lottie_4star = load_lottieurl(lottie_url_4star)
+    st_lottie(lottie_4star, key="4stars", height=300)
+
+def streamlit_5star(): 
+    lottie_url_5star = "https://assets3.lottiefiles.com/private_files/lf30_fnh9mbud.json"
+    lottie_5star = load_lottieurl(lottie_url_5star)
+    st_lottie(lottie_5star, key="5stars", height=300)
+
+
+########### 예측 평점 ###########
+
+def predict_1star(): 
+    lottie_url_1star = "https://assets3.lottiefiles.com/private_files/lf30_gjwkgweu.json"
+    lottie_1star = load_lottieurl(lottie_url_1star)
+    st_lottie(lottie_1star, key="1star", height=300)
+    
+    
+def predict_2star():  
+    lottie_url_2star = "https://assets3.lottiefiles.com/private_files/lf30_liff4pv6.json"
+    lottie_2star = load_lottieurl(lottie_url_2star)
+    st_lottie(lottie_2star, key="2star", height=300)
+
+def predict_3star():
+    lottie_url_3star = "https://assets3.lottiefiles.com/private_files/lf30_15cotjfi.json"
+    lottie_3star = load_lottieurl(lottie_url_3star)
     st_lottie(lottie_3star, key="3star", height=300)
 
-def streamlit_4star():
+def predict_4star(): 
     lottie_url_4star = "https://assets3.lottiefiles.com/private_files/lf30_r3usrsoq.json"
     lottie_4star = load_lottieurl(lottie_url_4star)
     st_lottie(lottie_4star, key="4star", height=300)
 
-def streamlit_5star():
+def predict_5star(): 
     lottie_url_5star = "https://assets3.lottiefiles.com/private_files/lf30_fnh9mbud.json"
     lottie_5star = load_lottieurl(lottie_url_5star)
     st_lottie(lottie_5star, key="5star", height=300)
+    
 
 ###################################################################
 
@@ -584,13 +617,14 @@ st.markdown("<h3 style='text-align: center; '>쇼핑 평점 분석</h3>", unsafe
 
 
 # 주소 입력
-with st.form('Naver', clear_on_submit=True):
-    Naver_url = st.text_input(label="URL", value="")
-    N_url=Naver_url
+with st.form('sub', clear_on_submit=True):
+    input_url = st.text_input(label="URL", value="")
+    url=input_url
+    print(url)
     st.form_submit_button('분석')
 
 
-if st.form_submit_button and N_url:
+if st.form_submit_button and url:
     with st_lottie_spinner(lottie_search, key="search", height=300):
         time.sleep(2)
     Naver_Shopping_Analysis()

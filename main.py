@@ -553,7 +553,7 @@ st.markdown("<h3 style='text-align: center; '>댓글 분석</h3>", unsafe_allow_
 
 
 # 주소 입력
-with st.form('Youtube', clear_on_submit=True):
+with st.form('main', clear_on_submit=True):
     Youtube_url = st.text_input(label="URL", value="")
     Y_url=Youtube_url
     my_str = Y_url.replace("https://www.youtube.com/watch?v=","")
