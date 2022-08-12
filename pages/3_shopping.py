@@ -7,14 +7,12 @@ import re
 import pandas as pd
 import numpy as np
 import os
-import imp
 import time
 import pandas as pd
 from googleapiclient.discovery import build
 import os
 import re
 import streamlit as st
-import pafy as pa
 import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
@@ -26,8 +24,6 @@ from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
 from keras.models import load_model
 import pickle
-import socket
-import sqlite3
 from selenium.webdriver.common.keys import Keys
 import warnings
 warnings.filterwarnings('ignore')
@@ -35,7 +31,6 @@ warnings.filterwarnings('ignore')
 from streamlit_lottie import st_lottie
 from streamlit_lottie import st_lottie_spinner
 import requests
-import math
 
 okt = Okt()
 
@@ -500,6 +495,10 @@ def Naver_Shopping_Analysis():
     Real_grade()
     Predict_grade()
     ###
+    st.info("")
+    # 원형 차트 출력 
+    st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
+    Create_plot()
 
     #전체 댓글
     st.info("전체 리뷰(개수 : %s)" % len(sheet))
@@ -514,12 +513,6 @@ def Naver_Shopping_Analysis():
     st.warning("중립 리뷰(개수 : %s)" % len(pd_contain3))
     st.table(neu_result)
     
-
-    st.info("")
-    # 원형 차트 출력 
-    st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
-    Create_plot()
-
     st.info("")
     # 워드 클라우드 출력
     st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)

@@ -53,8 +53,23 @@ def num_re():
             # 시간 안적혀 있으면 그대로 리턴
             return str 
     return str
-  
 
+#주소 뒤에 list index가 있다면..
+def zuso():
+    my_url = "".join((my_str2, 's'))
+    m_str =  my_url.replace("https://www.youtube.com/watch?v=","")
+    for i in range(1000000):
+        if m_str.find("&list=WL&index="):
+            dele = "&list=WL&index=%ss" % i
+            dele_str = m_str.replace(dele, "")
+
+            # find 결과가 false면 -1 리턴. 변환 후엔 당연히 false가 반환
+            if dele_str.find("&list=WL&index=")== -1:
+                return dele_str
+            else:
+                # 쓰레기 값. if문을 쓰기 위함
+                a=1
+    return dele_str
 
 #썸네일 출력
 def get_thumbnail(url):
@@ -564,4 +579,5 @@ if st.form_submit_button and my_str:
     with st_lottie_spinner(lottie_search, key="search", height=300):
         time.sleep(2)
     my_str2 = num_re()
+    my_str2 = zuso()
     Youtube_Comments_Analysis()

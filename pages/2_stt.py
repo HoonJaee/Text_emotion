@@ -30,7 +30,7 @@ contain2 = []
 
 def Analysis(num):
     tokenizer = Tokenizer()
-    okt = Okt()
+    okt = Okt() 
     max_len = 30
 
     # 불용어
